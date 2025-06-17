@@ -1,18 +1,37 @@
+// -------------------------------------------------------------
+// Menu screen logic for the DE1-SoC fighting game
+// -------------------------------------------------------------
+// Renders the word "MENU" using a simple bitmap font and drives the
+// seven-segment displays with "1P" or "2P" depending on SW[0].  A
+// rising edge on `key_pressed` causes the module to deassert
+// `in_menu_state` and generate a one-cycle `start_game` pulse.
+// -------------------------------------------------------------
+
 module menu_screen (
-    input  wire        display_enable,
-    input  wire [9:0]  pixel_x,
-    input  wire [9:0]  pixel_y,
+    input  wire        clk,
+    input  wire        reset,
+    input  wire        video_on,
+    input  wire [9:0]  x,
+    input  wire [9:0]  y,
 
     input  wire        sw0_mode_select,
+    input  wire        key_pressed,
 
-    input  wire [3:0]  p1_buttons,
+    output reg  [2:0]  vga_r,
+    output reg  [2:0]  vga_g,
+    output reg  [1:0]  vga_b,
 
-    output reg  [7:0]  color_out_332,
+    output wire [6:0]  HEX0,
+    output wire [6:0]  HEX1,
+    output wire [6:0]  HEX2,
+    output wire [6:0]  HEX3,
+    output wire [6:0]  HEX4,
+    output wire [6:0]  HEX5,
 
-    output wire [3:0]  mode_hex,
+    output wire [9:0]  LEDR,
 
-    output wire [9:0]  leds_out,
-    output wire        start_game
+    output reg         in_menu_state,
+    output reg         start_game
 );
 
     // --- Constants ---
@@ -124,9 +143,10 @@ module menu_screen (
     integer row_idx;
     integer char_left;
     reg pixel_on;
+    reg [7:0] color_out_332;
 
     always @(*) begin
-        if (!display_enable) begin
+        if (!video_on) begin
             color_out_332 = COLOR_BLACK;
         end else begin
             color_out_332 = COLOR_BG;
@@ -134,10 +154,10 @@ module menu_screen (
 
             for (i = 0; i < 4; i = i + 1) begin
                 char_left = MENU_LEFT + i * (CHAR_W + CHAR_SP);
-                if (pixel_x >= char_left && pixel_x < char_left + CHAR_W &&
-                    pixel_y >= MENU_TOP  && pixel_y < MENU_TOP + CHAR_H) begin
-                    row_idx = (pixel_y - MENU_TOP) / SCALE;
-                    col_idx = (pixel_x - char_left) / SCALE;
+                if (x >= char_left && x < char_left + CHAR_W &&
+                    y >= MENU_TOP  && y < MENU_TOP + CHAR_H) begin
+                    row_idx = (y - MENU_TOP) / SCALE;
+                    col_idx = (x - char_left) / SCALE;
                     if (font_row(i[2:0], row_idx[2:0])[4 - col_idx])
                         pixel_on = 1'b1;
                 end
@@ -149,13 +169,50 @@ module menu_screen (
     end
 
     // ------------------------------------------------------------------
-    // Game mode, LEDs and start signal
+    // VGA colour channel mapping
     // ------------------------------------------------------------------
-    assign mode_hex = sw0_mode_select ? 4'h2 : 4'h1;
+    always @(*) begin
+        vga_r = color_out_332[7:5];
+        vga_g = color_out_332[4:2];
+        vga_b = color_out_332[1:0];
+    end
 
-    assign leds_out = 10'b0000000000;
+    // ------------------------------------------------------------------
+    // Seven-segment displays and LEDs
+    // ------------------------------------------------------------------
+    wire [3:0] mode_digit = sw0_mode_select ? 4'h2 : 4'h1;
+    hexto7seg hex0_inst (.hexn(HEX0), .hex(mode_digit));
 
-    // start_game asserted when any player 1 button is pressed
-    assign start_game = |p1_buttons;
+    localparam [6:0] SEG_P   = 7'b0001100;
+    localparam [6:0] SEG_OFF = 7'b1111111;
+
+    assign HEX1 = SEG_P;
+    assign HEX2 = SEG_OFF;
+    assign HEX3 = SEG_OFF;
+    assign HEX4 = SEG_OFF;
+    assign HEX5 = SEG_OFF;
+
+    assign LEDR = 10'b0000000000;
+
+    // ------------------------------------------------------------------
+    // Menu state and start signal generation
+    // ------------------------------------------------------------------
+    reg prev_key;
+
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            in_menu_state <= 1'b1;
+            start_game    <= 1'b0;
+            prev_key      <= 1'b0;
+        end else begin
+            prev_key <= key_pressed;
+            if (in_menu_state && key_pressed && !prev_key) begin
+                start_game    <= 1'b1;
+                in_menu_state <= 1'b0;
+            end else begin
+                start_game <= 1'b0;
+            end
+        end
+    end
 
 endmodule
