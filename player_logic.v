@@ -1,7 +1,10 @@
 
 module player_logic (
-    input  wire        clk_game,           
-    input  wire        reset,              
+    input  wire        clk_game,
+    input  wire        reset,
+
+    // Starting X position for this player
+    input  wire [9:0]  init_x_pos,
 
     input  wire        move_left_cmd_in,
     input  wire        move_right_cmd_in,
@@ -13,7 +16,7 @@ module player_logic (
     output wire [9:0]  char_width_out,     // sprite width
     output wire [9:0]  char_height_out,    // sprite height
     output reg  [7:0]  char_color_out_332, // sprite color (3-3-2)
-output wire [1:0] attack_phase_out,
+    output wire [1:0]  attack_phase_out,
     
     output wire        attack_active      
 );
@@ -87,7 +90,7 @@ output wire [1:0] attack_phase_out,
     // Main FSM + movement
     always @(posedge clk_game or posedge reset) begin
         if (reset) begin
-            char_x_pos_out     <= P_INIT_X;
+            char_x_pos_out     <= init_x_pos;
             char_color_out_332 <= COL_IDLE;
             state_reg          <= S_IDLE;
             timer_reg          <= 8'd0;
