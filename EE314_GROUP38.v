@@ -140,6 +140,7 @@ wire [2:0] vga_r_3bit_internal;
                      GAMEPLAY_STATE = 2'd2,
                      GAMEOVER_STATE = 2'd3;
     reg [1:0] current_state, next_state;
+  reg [1:0] prev_state;               // for detecting state entry pulses
 
     // Countdown counter (3,2,1 then start)
     reg [1:0] countdown_val;
@@ -152,8 +153,11 @@ wire [2:0] vga_r_3bit_internal;
     end
 
     // Any player button triggers menu start
-    wire menu_key_pressed = p1_move_left_cmd | p1_move_right_cmd |
-                            p1_attack_cmd    | p1_confirm_cmd;
+  wire menu_key_pressed = p1_move_left_cmd | p1_move_right_cmd |
+                          p1_attack_cmd    | p1_confirm_cmd;
+
+  // Pulse-high when the FSM transitions back to MENU_STATE
+  wire menu_reset = (current_state == MENU_STATE) && (prev_state != MENU_STATE);
 
 	 wire [1:0]  attack_phase;
 	 
@@ -242,7 +246,7 @@ graphics_mixer mixer_inst (
     // --- Menu Screen ---
     menu_screen menu_inst (
         .clk            (clk_game),
-        .reset          (1'b0),
+        .reset          (menu_reset),
         .video_on       (current_display_enable),
         .x              (current_pixel_x),
         .y              (current_pixel_y),
@@ -287,8 +291,9 @@ graphics_mixer mixer_inst (
     // Game Flow State Machine
     // ---------------------------------------------------------------
     always @(posedge clk_game) begin
-        current_state <= next_state;
-        blink_flip    <= ~blink_flip;
+        prev_state   <= current_state;
+        current_state<= next_state;
+        blink_flip   <= ~blink_flip;
     end
 
     always @(*) begin
