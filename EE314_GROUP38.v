@@ -47,7 +47,10 @@ module EE314_GROUP38(
 	output		          		IRDA_TXD,
 
 	//////////// KEY //////////
-	input 		     [3:0]		KEY,
+	input                [2:0]              KEY,
+
+        // GPIO for Player 2
+        input                [2:0]              GPIO_P2,
 
 	//////////// LED //////////
 	output		     [9:0]		LEDR,
@@ -96,10 +99,12 @@ wire winner_p1, winner_p2, game_is_draw;
 
     // Internal Wires
 	 
-    wire p1_move_left_cmd;
-    wire p1_move_right_cmd;
-    wire p1_attack_cmd;       
-    wire p1_confirm_cmd;      
+    wire p1_left;
+    wire p1_right;
+    wire p1_attack;
+    wire p2_left;
+    wire p2_right;
+    wire p2_attack;
 	 
     
 	 wire clk_25mhz_pixel;
@@ -129,32 +134,35 @@ game_clocks clocks_inst (
     .clk_50Mhz_in (CLOCK_50),
     .reset_in     (1'b0),
     .sw1_in       (SW[1]),
-    .key_step_in  (KEY[0]),
+    .key_step_in  (1'b0),
 	.clk_25Mhz_out(clk_25mhz_pixel),
 	.clk_60Hz_out(clk_game),
 	.frame_sync_in(frame_sync)
 	);
 	 
-    input_handler player1_input_inst (
-        .clk_50Mhz(CLOCK_50),
-        .clk_60Hz_game(clk_game),
+    input_handler inputs_inst (
+        .clk(CLOCK_50),
         .reset(1'b0),
-        .p1_key_left_raw_in(KEY[1]),    
-        .p1_key_right_raw_in(KEY[2]),   
-        .p1_key_attack_raw_in(KEY[3]),  
-        .p1_key_confirm_raw_in(1'b0), 
-        .p1_move_left_cmd_out(p1_move_left_cmd),
-        .p1_move_right_cmd_out(p1_move_right_cmd),
-        .p1_attack_cmd_out(p1_attack_cmd),
-        .p1_confirm_cmd_out(p1_confirm_cmd)
+        .key_p1_left_n(KEY[0]),
+        .key_p1_right_n(KEY[1]),
+        .key_p1_attack_n(KEY[2]),
+        .gpio_p2_left(GPIO_P2[0]),
+        .gpio_p2_right(GPIO_P2[1]),
+        .gpio_p2_attack(GPIO_P2[2]),
+        .p1_left(p1_left),
+        .p1_right(p1_right),
+        .p1_attack(p1_attack),
+        .p2_left(p2_left),
+        .p2_right(p2_right),
+        .p2_attack(p2_attack)
     );
 	 
     player_logic player1_logic_inst (
     .clk_game(clk_game),
     .reset(reset_gameplay),  // CHANGE THIS: reset during menu/countdown
-    .move_left_cmd_in(p1_move_left_cmd && (current_game_state == 3'b010)), // Only in gameplay
-    .move_right_cmd_in(p1_move_right_cmd && (current_game_state == 3'b010)), // Only in gameplay
-    .p1_attack_cmd_in(p1_attack_cmd && (current_game_state == 3'b010)), // Only in gameplay
+    .move_left_cmd_in(p1_left && (current_game_state == 3'b010)), // Only in gameplay
+    .move_right_cmd_in(p1_right && (current_game_state == 3'b010)), // Only in gameplay
+    .p1_attack_cmd_in(p1_attack && (current_game_state == 3'b010)), // Only in gameplay
     .char_x_pos_out(char_x_pos),
     .char_y_pos_out(char_y_pos),
     .char_width_out(char_width),
@@ -251,7 +259,7 @@ wire menu_pixel_visible;
 // State assignments
 assign menu_active = (current_game_state == 3'b000);      // STATE_MENU
 assign countdown_active = (current_game_state == 3'b001); // STATE_COUNTDOWN
-assign p1_any_button_pressed = p1_move_left_cmd || p1_move_right_cmd || p1_attack_cmd;
+assign p1_any_button_pressed = p1_left || p1_right || p1_attack;
 
 // Add game state controller instance
 game_state_controller game_state_ctrl (
