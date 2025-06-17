@@ -143,6 +143,9 @@ module menu_screen (
     integer row_idx;
     integer char_left;
     reg pixel_on;
+
+    reg [4:0] font_bits;
+
     reg [7:0] color_out_332;
 
     always @(*) begin
@@ -158,7 +161,12 @@ module menu_screen (
                     y >= MENU_TOP  && y < MENU_TOP + CHAR_H) begin
                     row_idx = (y - MENU_TOP) / SCALE;
                     col_idx = (x - char_left) / SCALE;
+
+                    font_bits = font_row(i[2:0], row_idx[2:0]);
+                    if (font_bits[4 - col_idx])
+
                     if (font_row(i[2:0], row_idx[2:0])[4 - col_idx])
+                      
                         pixel_on = 1'b1;
                 end
             end
