@@ -164,9 +164,6 @@ module menu_screen (
 
                     font_bits = font_row(i[2:0], row_idx[2:0]);
                     if (font_bits[4 - col_idx])
-
-                    if (font_row(i[2:0], row_idx[2:0])[4 - col_idx])
-                      
                         pixel_on = 1'b1;
                 end
             end

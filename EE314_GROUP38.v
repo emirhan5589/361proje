@@ -50,7 +50,7 @@ module EE314_GROUP38(
 	input                [2:0]              KEY,
 
         // GPIO for Player 2
-        input                [2:0]              GPIO_P2,
+        input                [3:0]              GPIO_P2,
 
 	//////////// LED //////////
 	output		     [9:0]		LEDR,
