@@ -118,14 +118,21 @@ wire [2:0] p1_health, p2_health;
     wire [9:0] char_y_pos;
     wire [9:0] char_width;
     wire [9:0] char_height;
-    wire [7:0] char_color_332;	// RRRGGGBB from test pattern generator
+    wire [7:0] char_color_332;	// Player 1 color
+    // Player 2 sprite wires
+    wire [9:0] char2_x_pos;
+    wire [9:0] char2_y_pos;
+    wire [9:0] char2_width;
+    wire [9:0] char2_height;
+    wire [7:0] char2_color_332;
 
     wire [7:0] background_pixel_color_332;  // Output of background_generator
     wire [7:0] char_rendered_pixel_color_332;        // Color output of character_renderer
     wire       char_is_visible_at_pixel;    // Visibility flag from character_renderer
     wire [7:0] final_pixel_color_to_vga_332; // Output of graphics_mixer
 
-	 wire [1:0]  attack_phase;
+    wire [1:0] attack_phase;
+    wire [1:0] attack_phase_p2;
 	 
 	   wire frame_sync;
     wire vblank;
@@ -163,12 +170,28 @@ game_clocks clocks_inst (
     .move_left_cmd_in(p1_left && (current_game_state == 3'b010)), // Only in gameplay
     .move_right_cmd_in(p1_right && (current_game_state == 3'b010)), // Only in gameplay
     .p1_attack_cmd_in(p1_attack && (current_game_state == 3'b010)), // Only in gameplay
+    .init_x_pos(10'd304),
     .char_x_pos_out(char_x_pos),
     .char_y_pos_out(char_y_pos),
     .char_width_out(char_width),
     .char_height_out(char_height),
     .char_color_out_332(char_color_332),
     .attack_phase_out(attack_phase)
+);
+
+    player_logic player2_logic_inst (
+    .clk_game(clk_game),
+    .reset(reset_gameplay),
+    .move_left_cmd_in(p2_left && (current_game_state == 3'b010)),
+    .move_right_cmd_in(p2_right && (current_game_state == 3'b010)),
+    .p1_attack_cmd_in(p2_attack && (current_game_state == 3'b010)),
+    .init_x_pos(10'd500),
+    .char_x_pos_out(char2_x_pos),
+    .char_y_pos_out(char2_y_pos),
+    .char_width_out(char2_width),
+    .char_height_out(char2_height),
+    .char_color_out_332(char2_color_332),
+    .attack_phase_out(attack_phase_p2)
 );
 	 
     // --- Test Pattern Generator ---
@@ -202,12 +225,19 @@ graphics_mixer mixer_inst (
     .pixel_x(current_pixel_x),
     .pixel_y(current_pixel_y),
     .background_color_in_332(background_pixel_color_332),
-    .char_x_pos(char_x_pos),
-    .char_y_pos(char_y_pos),
-    .char_width(char_width),
-    .char_height(char_height),
-    .char_color_in_332(char_color_332),
-    .attack_phase(attack_phase),
+    .char1_x_pos(char_x_pos),
+    .char1_y_pos(char_y_pos),
+    .char1_width(char_width),
+    .char1_height(char_height),
+    .char1_color_in_332(char_color_332),
+    .char1_attack_phase(attack_phase),
+
+    .char2_x_pos(char2_x_pos),
+    .char2_y_pos(char2_y_pos),
+    .char2_width(char2_width),
+    .char2_height(char2_height),
+    .char2_color_in_332(char2_color_332),
+    .char2_attack_phase(attack_phase_p2),
     .current_game_state(current_game_state),     // ADD THIS
     .menu_color_in_332(menu_color_332),          // ADD THIS  
     .menu_pixel_visible(menu_pixel_visible),     // ADD THIS
