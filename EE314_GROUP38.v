@@ -86,6 +86,14 @@ wire [2:0] vga_r_3bit_internal;
     wire [1:0] vga_b_2bit_internal; 
 
 
+	 
+	 wire timer_enable;
+wire timer_reset;
+wire [7:0] game_time_seconds;
+wire winner_p1, winner_p2, game_is_draw;
+
+
+
     // Internal Wires
 	 
     wire p1_move_left_cmd;
@@ -111,53 +119,6 @@ wire [2:0] vga_r_3bit_internal;
     wire [7:0] char_rendered_pixel_color_332;        // Color output of character_renderer
     wire       char_is_visible_at_pixel;    // Visibility flag from character_renderer
     wire [7:0] final_pixel_color_to_vga_332; // Output of graphics_mixer
-
-    // Menu screen signals
-    wire [2:0] menu_vga_r;
-    wire [2:0] menu_vga_g;
-    wire [1:0] menu_vga_b;
-    wire [6:0] menu_hex0;
-    wire [6:0] menu_hex1;
-    wire [6:0] menu_hex2;
-    wire [6:0] menu_hex3;
-    wire [6:0] menu_hex4;
-    wire [6:0] menu_hex5;
-    wire [9:0] menu_leds;
-    wire       menu_start_game;
-    wire       menu_in_state;
-
-    // RGB packed into 8-bit color for VGA driver
-    wire [7:0] menu_pixel_color_332 = {menu_vga_r, menu_vga_g, menu_vga_b};
-
-    // Output multiplexers
-    reg  [7:0] vga_color_mux_332;
-    reg  [6:0] hex0_mux, hex1_mux, hex2_mux, hex3_mux, hex4_mux, hex5_mux;
-    reg  [9:0] leds_mux;
-
-    // FSM state encoding
-    localparam [1:0] MENU_STATE     = 2'd0,
-                     COUNTDOWN_STATE= 2'd1,
-                     GAMEPLAY_STATE = 2'd2,
-                     GAMEOVER_STATE = 2'd3;
-    reg [1:0] current_state, next_state;
-  reg [1:0] prev_state;               // for detecting state entry pulses
-
-    // Countdown counter (3,2,1 then start)
-    reg [1:0] countdown_val;
-    reg        blink_flip;
-
-    initial begin
-        current_state = MENU_STATE;
-        blink_flip    = 1'b0;
-        countdown_val = 2'd3;
-    end
-
-    // Any player button triggers menu start
-  wire menu_key_pressed = p1_move_left_cmd | p1_move_right_cmd |
-                          p1_attack_cmd    | p1_confirm_cmd;
-
-  // Pulse-high when the FSM transitions back to MENU_STATE
-  wire menu_reset = (current_state == MENU_STATE) && (prev_state != MENU_STATE);
 
 	 wire [1:0]  attack_phase;
 	 
@@ -189,19 +150,18 @@ game_clocks clocks_inst (
     );
 	 
     player_logic player1_logic_inst (
-        .clk_game(clk_game),
-        .reset(1'b0),
-        .move_left_cmd_in(p1_move_left_cmd),
-        .move_right_cmd_in(p1_move_right_cmd),
-		  .p1_attack_cmd_in(p1_attack_cmd),
-        // Outputs character properties
-        .char_x_pos_out(char_x_pos),
-        .char_y_pos_out(char_y_pos),
-        .char_width_out(char_width),
-        .char_height_out(char_height),
-        .char_color_out_332(char_color_332),
-		  .attack_phase_out(attack_phase)
-    );
+    .clk_game(clk_game),
+    .reset(reset_gameplay),  // CHANGE THIS: reset during menu/countdown
+    .move_left_cmd_in(p1_move_left_cmd && (current_game_state == 3'b010)), // Only in gameplay
+    .move_right_cmd_in(p1_move_right_cmd && (current_game_state == 3'b010)), // Only in gameplay
+    .p1_attack_cmd_in(p1_attack_cmd && (current_game_state == 3'b010)), // Only in gameplay
+    .char_x_pos_out(char_x_pos),
+    .char_y_pos_out(char_y_pos),
+    .char_width_out(char_width),
+    .char_height_out(char_height),
+    .char_color_out_332(char_color_332),
+    .attack_phase_out(attack_phase)
+);
 	 
     // --- Test Pattern Generator ---
     background_generator background_gen_inst (      
@@ -230,47 +190,27 @@ game_clocks clocks_inst (
 	 
 
 graphics_mixer mixer_inst (
-    .background_color_in_332    (background_pixel_color_332),
-    .char_color_in_332    (char_rendered_pixel_color_332),
     .display_enable(current_display_enable),
-    .pixel_x                    (current_pixel_x),
-    .pixel_y                    (current_pixel_y),
-    .char_x_pos                 (char_x_pos),
-    .char_y_pos                 (char_y_pos),
-    .char_width                 (char_width),
-    .char_height                (char_height),
-    .attack_phase               (attack_phase),
-    .final_pixel_color_out_332  (final_pixel_color_to_vga_332)
+    .pixel_x(current_pixel_x),
+    .pixel_y(current_pixel_y),
+    .background_color_in_332(background_pixel_color_332),
+    .char_x_pos(char_x_pos),
+    .char_y_pos(char_y_pos),
+    .char_width(char_width),
+    .char_height(char_height),
+    .char_color_in_332(char_color_332),
+    .attack_phase(attack_phase),
+    .current_game_state(current_game_state),     // ADD THIS
+    .menu_color_in_332(menu_color_332),          // ADD THIS  
+    .menu_pixel_visible(menu_pixel_visible),     // ADD THIS
+    .final_pixel_color_out_332(final_pixel_color_to_vga_332)
 );
-
-    // --- Menu Screen ---
-    menu_screen menu_inst (
-        .clk            (clk_game),
-        .reset          (menu_reset),
-        .video_on       (current_display_enable),
-        .x              (current_pixel_x),
-        .y              (current_pixel_y),
-        .sw0_mode_select(SW[0]),
-        .key_pressed    (menu_key_pressed),
-        .vga_r          (menu_vga_r),
-        .vga_g          (menu_vga_g),
-        .vga_b          (menu_vga_b),
-        .HEX0           (menu_hex0),
-        .HEX1           (menu_hex1),
-        .HEX2           (menu_hex2),
-        .HEX3           (menu_hex3),
-        .HEX4           (menu_hex4),
-        .HEX5           (menu_hex5),
-        .LEDR           (menu_leds),
-        .in_menu_state  (menu_in_state),
-        .start_game     (menu_start_game)
-    );
 
     // --- VGA Controller ---
     vga_driver vga_controller_inst (
         .pixel_clk(clk_25mhz_pixel),
         .reset(1'b0),
-        .color_in_332(vga_color_mux_332),
+        .color_in_332(final_pixel_color_to_vga_332), 
 
         // Outputs for pattern generator's reference
         .pixel_x(current_pixel_x),
@@ -284,110 +224,99 @@ graphics_mixer mixer_inst (
         .vga_g_out(vga_g_3bit_internal),
         .vga_b_out(vga_b_2bit_internal),
 		  .frame_sync(frame_sync),     
-        .vblank(vblank)
+        .vblank(vblank) 
     );
 
-    // ---------------------------------------------------------------
-    // Game Flow State Machine
-    // ---------------------------------------------------------------
-    always @(posedge clk_game) begin
-        prev_state   <= current_state;
-        current_state<= next_state;
-        blink_flip   <= ~blink_flip;
-    end
-
-    always @(*) begin
-        next_state = current_state;
-        case (current_state)
-            MENU_STATE: begin
-                if (menu_start_game)
-                    next_state = COUNTDOWN_STATE;
-            end
-            COUNTDOWN_STATE: begin
-                if (countdown_val == 0)
-                    next_state = GAMEPLAY_STATE;
-            end
-            GAMEPLAY_STATE: begin
-                // Placeholder for actual game-over condition
-                if (1'b0)
-                    next_state = GAMEOVER_STATE;
-            end
-            GAMEOVER_STATE: begin
-                if (menu_key_pressed)
-                    next_state = MENU_STATE;
-            end
-            default: next_state = MENU_STATE;
-        endcase
-    end
-
-    // Countdown counter logic
-    always @(posedge clk_game) begin
-        if (current_state != COUNTDOWN_STATE)
-            countdown_val <= 2'd3;
-        else if (countdown_val != 0)
-            countdown_val <= countdown_val - 1'b1;
-    end
-
-    // Output multiplexing based on state
-    always @(*) begin
-        case (current_state)
-            MENU_STATE: begin
-                vga_color_mux_332 = menu_pixel_color_332;
-                leds_mux   = menu_leds;
-                hex0_mux   = menu_hex0;
-                hex1_mux   = menu_hex1;
-                hex2_mux   = menu_hex2;
-                hex3_mux   = menu_hex3;
-                hex4_mux   = menu_hex4;
-                hex5_mux   = menu_hex5;
-            end
-            COUNTDOWN_STATE: begin
-                vga_color_mux_332 = background_pixel_color_332;
-                leds_mux   = 10'b0000000000;
-                hex0_mux   = 7'b1111111;
-                hex1_mux   = 7'b1111111;
-                hex2_mux   = 7'b1111111;
-                hex3_mux   = 7'b1111111;
-                hex4_mux   = 7'b1111111;
-                hex5_mux   = 7'b1111111;
-            end
-            GAMEPLAY_STATE: begin
-                vga_color_mux_332 = final_pixel_color_to_vga_332;
-                leds_mux   = 10'b0000000000;
-                hex0_mux   = 7'b1111111;
-                hex1_mux   = 7'b1111111;
-                hex2_mux   = 7'b1111111;
-                hex3_mux   = 7'b1111111;
-                hex4_mux   = 7'b1111111;
-                hex5_mux   = 7'b1111111;
-            end
-            GAMEOVER_STATE: begin
-                vga_color_mux_332 = final_pixel_color_to_vga_332;
-                leds_mux   = blink_flip ? 10'b1111111111 : 10'b0000000000;
-                hex0_mux   = 7'b1111111;
-                hex1_mux   = 7'b1111111;
-                hex2_mux   = 7'b1111111;
-                hex3_mux   = 7'b1111111;
-                hex4_mux   = 7'b1111111;
-                hex5_mux   = 7'b1111111;
-            end
-            default: begin
-                vga_color_mux_332 = menu_pixel_color_332;
-                leds_mux   = menu_leds;
-                hex0_mux   = menu_hex0;
-                hex1_mux   = menu_hex1;
-                hex2_mux   = menu_hex2;
-                hex3_mux   = menu_hex3;
-                hex4_mux   = menu_hex4;
-                hex5_mux   = menu_hex5;
-            end
-        endcase
-    end
 
 
 
+	 
+	 
+	 
+	 
+// Game state wires
+wire [2:0] current_game_state;
+wire [7:0] countdown_value;
+wire game_mode_1p;
+wire start_gameplay;
+wire reset_gameplay;
+wire p1_any_button_pressed;
+
+// Menu system wires
+wire menu_active;
+wire countdown_active;
+wire [7:0] menu_color_332;
+wire menu_pixel_visible;
+
+// State assignments
+assign menu_active = (current_game_state == 3'b000);      // STATE_MENU
+assign countdown_active = (current_game_state == 3'b001); // STATE_COUNTDOWN
+assign p1_any_button_pressed = p1_move_left_cmd || p1_move_right_cmd || p1_attack_cmd;
+
+// Add game state controller instance
+game_state_controller game_state_ctrl (
+    .clk_game(clk_game),
+    .reset(1'b0),
+    .p1_any_button_pressed(p1_any_button_pressed),
+    .sw0_game_mode(SW[0]),
+    .game_over_condition(1'b0),  // TODO: Connect to actual game over logic
+    .winner_p1(1'b0),            // TODO: Connect to actual winner logic
+    .winner_p2(1'b0),            // TODO: Connect to actual winner logic
+    .current_game_state(current_game_state),
+    .countdown_value(countdown_value),
+    .game_mode_1p(game_mode_1p),
+    .start_gameplay(start_gameplay),
+    .reset_gameplay(reset_gameplay),
+	 .timer_enable(timer_enable),             // ADD THIS
+    .timer_reset(timer_reset)
+);
+
+menu_controller menu_ctrl (
+    .pixel_clk(clk_25mhz_pixel),
+    .reset(1'b0),
+    .display_enable(current_display_enable),
+    .pixel_x(current_pixel_x),
+    .pixel_y(current_pixel_y),
+    .menu_active(menu_active),
+    .countdown_active(countdown_active),
+    .countdown_value(countdown_value),
+    .game_mode_1p(game_mode_1p),
+    .menu_color_out_332(menu_color_332),
+    .menu_pixel_visible(menu_pixel_visible)
+);
+
+// Game timer instance
+game_timer timer_inst (
+    .clk_game(clk_game),
+    .reset(1'b0),
+    .timer_enable(timer_enable),
+    .timer_reset(timer_reset),
+    .seconds_count(game_time_seconds)
+);
 
 
+// Seven-segment controller instance
+seven_segment_controller seg7_ctrl (
+    .clk_game(clk_game),
+    .reset(1'b0),
+    .current_game_state(current_game_state),
+    .game_mode_1p(game_mode_1p),
+    .game_time_seconds(game_time_seconds),
+    .winner_p1(winner_p1),                  // TODO: Connect to actual game logic
+    .winner_p2(winner_p2),                  // TODO: Connect to actual game logic  
+    .game_is_draw(game_is_draw),            // TODO: Connect to actual game logic
+    .hex0_out(HEX0),
+    .hex1_out(HEX1),
+    .hex2_out(HEX2),
+    .hex3_out(HEX3),
+    .hex4_out(HEX4),
+    .hex5_out(HEX5)
+);
+
+// Temporary assignments for winner logic (to be implemented later)
+assign winner_p1 = 1'b0;
+assign winner_p2 = 1'b0;
+assign game_is_draw = 1'b0;
 //=======================================================
 //  Structural coding
 //=======================================================
@@ -398,16 +327,6 @@ assign VGA_SYNC_N  = 1'b1;
 assign VGA_R = {vga_r_3bit_internal, vga_r_3bit_internal[2:1], vga_r_3bit_internal[2:0]}; 
 assign VGA_G = {vga_g_3bit_internal, vga_g_3bit_internal[2:1], vga_g_3bit_internal[2:0]};
 assign VGA_B = {vga_b_2bit_internal, vga_b_2bit_internal, vga_b_2bit_internal, vga_b_2bit_internal};
-
-// --- 7-segment displays and LEDs ---
-assign HEX0 = hex0_mux;
-assign HEX1 = hex1_mux;
-assign HEX2 = hex2_mux;
-assign HEX3 = hex3_mux;
-assign HEX4 = hex4_mux;
-assign HEX5 = hex5_mux;
-
-assign LEDR = leds_mux;
 
 
 endmodule
