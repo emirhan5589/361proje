@@ -5,19 +5,11 @@ module menu_screen (
 
     input  wire        sw0_mode_select,
 
-    input  wire        p1_btn_left,
-    input  wire        p1_btn_right,
-    input  wire        p1_btn_attack,
-    input  wire        p1_btn_confirm,
+    input  wire [3:0]  p1_buttons,
 
     output reg  [7:0]  color_out_332,
 
-    output wire [6:0]  hex0_out,
-    output wire [6:0]  hex1_out,
-    output wire [6:0]  hex2_out,
-    output wire [6:0]  hex3_out,
-    output wire [6:0]  hex4_out,
-    output wire [6:0]  hex5_out,
+    output wire [3:0]  mode_hex,
 
     output wire [9:0]  leds_out,
     output wire        start_game
@@ -26,7 +18,7 @@ module menu_screen (
     // --- Constants ---
     localparam [7:0] COLOR_BLACK = 8'b00000000;
     localparam [7:0] COLOR_WHITE = 8'b11111111;
-    localparam [7:0] COLOR_BG    = 8'b00100101; // teal background
+    localparam [7:0] COLOR_BG    = 8'b00000011; // dark blue background
 
     localparam integer SCALE    = 8;             // font pixel scale factor
     localparam integer CHAR_W   = 5 * SCALE;     // character width  (pixels)
@@ -157,24 +149,13 @@ module menu_screen (
     end
 
     // ------------------------------------------------------------------
-    // 7-segment display and LEDs
+    // Game mode, LEDs and start signal
     // ------------------------------------------------------------------
-    localparam [6:0] SEG_ONE  = 7'b1111001; // active-low
-    localparam [6:0] SEG_TWO  = 7'b0100100;
-    localparam [6:0] SEG_P    = 7'b0001100;
-    localparam [6:0] SEG_OFF  = 7'b1111111;
-
-    assign hex0_out = sw0_mode_select ? SEG_TWO : SEG_ONE;
-    assign hex1_out = SEG_P;
-    assign hex2_out = SEG_OFF;
-    assign hex3_out = SEG_OFF;
-    assign hex4_out = SEG_OFF;
-    assign hex5_out = SEG_OFF;
+    assign mode_hex = sw0_mode_select ? 4'h2 : 4'h1;
 
     assign leds_out = 10'b0000000000;
 
     // start_game asserted when any player 1 button is pressed
-    assign start_game = p1_btn_left | p1_btn_right |
-                        p1_btn_attack | p1_btn_confirm;
+    assign start_game = |p1_buttons;
 
 endmodule

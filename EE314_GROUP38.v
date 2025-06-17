@@ -112,6 +112,12 @@ wire [2:0] vga_r_3bit_internal;
     wire       char_is_visible_at_pixel;    // Visibility flag from character_renderer
     wire [7:0] final_pixel_color_to_vga_332; // Output of graphics_mixer
 
+    // Menu screen signals
+    wire [7:0] menu_pixel_color_332;
+    wire [3:0] menu_mode_hex;
+    wire [9:0] menu_leds;
+    wire       menu_start_game;
+
 	 wire [1:0]  attack_phase;
 	 
 	   wire frame_sync;
@@ -194,13 +200,26 @@ graphics_mixer mixer_inst (
     .char_height                (char_height),
     .attack_phase               (attack_phase),
     .final_pixel_color_out_332  (final_pixel_color_to_vga_332)
-);	 
+);
+
+    // --- Menu Screen ---
+    menu_screen menu_inst (
+        .display_enable(current_display_enable),
+        .pixel_x(current_pixel_x),
+        .pixel_y(current_pixel_y),
+        .sw0_mode_select(SW[0]),
+        .p1_buttons(~KEY[3:0]),
+        .color_out_332(menu_pixel_color_332),
+        .mode_hex(menu_mode_hex),
+        .leds_out(menu_leds),
+        .start_game(menu_start_game)
+    );
 
     // --- VGA Controller ---
     vga_driver vga_controller_inst (
         .pixel_clk(clk_25mhz_pixel),
         .reset(1'b0),
-        .color_in_332(final_pixel_color_to_vga_332), 
+        .color_in_332(menu_pixel_color_332),
 
         // Outputs for pattern generator's reference
         .pixel_x(current_pixel_x),
@@ -231,6 +250,20 @@ assign VGA_SYNC_N  = 1'b1;
 assign VGA_R = {vga_r_3bit_internal, vga_r_3bit_internal[2:1], vga_r_3bit_internal[2:0]}; 
 assign VGA_G = {vga_g_3bit_internal, vga_g_3bit_internal[2:1], vga_g_3bit_internal[2:0]};
 assign VGA_B = {vga_b_2bit_internal, vga_b_2bit_internal, vga_b_2bit_internal, vga_b_2bit_internal};
+
+// --- 7-segment displays ---
+hexto7seg hex0_inst (.hexn(HEX0), .hex(menu_mode_hex));
+
+localparam [6:0] SEG_P   = 7'b0001100;
+localparam [6:0] SEG_OFF = 7'b1111111;
+
+assign HEX1 = SEG_P;
+assign HEX2 = SEG_OFF;
+assign HEX3 = SEG_OFF;
+assign HEX4 = SEG_OFF;
+assign HEX5 = SEG_OFF;
+
+assign LEDR = menu_leds;
 
 
 endmodule
