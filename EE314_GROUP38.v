@@ -141,7 +141,8 @@ game_clocks clocks_inst (
 	);
 	 
     input_handler inputs_inst (
-        .clk(CLOCK_50),
+        .clk_fast(CLOCK_50),
+        .clk_game(clk_game),
         .reset(1'b0),
         .key_p1_left_n(KEY[0]),
         .key_p1_right_n(KEY[1]),

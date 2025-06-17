@@ -2,7 +2,8 @@
 // Debounces and synchronizes inputs for two players.
 
 module input_handler (
-    input  wire clk,
+    input  wire clk_fast,
+    input  wire clk_game,
     input  wire reset,
 
     // Player 1 buttons from onboard keys (active low)
@@ -30,21 +31,21 @@ module input_handler (
     wire p1_attack_db_n;
 
     button_debouncer db_p1_left(
-        .clk_fast(clk),
+        .clk_fast(clk_fast),
         .reset(reset),
         .btn_raw_in(key_p1_left_n),
         .btn_debounced_out(p1_left_db_n)
     );
 
     button_debouncer db_p1_right(
-        .clk_fast(clk),
+        .clk_fast(clk_fast),
         .reset(reset),
         .btn_raw_in(key_p1_right_n),
         .btn_debounced_out(p1_right_db_n)
     );
 
     button_debouncer db_p1_attack(
-        .clk_fast(clk),
+        .clk_fast(clk_fast),
         .reset(reset),
         .btn_raw_in(key_p1_attack_n),
         .btn_debounced_out(p1_attack_db_n)
@@ -56,21 +57,21 @@ module input_handler (
     wire p2_attack_db_n;
 
     button_debouncer db_p2_left(
-        .clk_fast(clk),
+        .clk_fast(clk_fast),
         .reset(reset),
         .btn_raw_in(~gpio_p2_left),
         .btn_debounced_out(p2_left_db_n)
     );
 
     button_debouncer db_p2_right(
-        .clk_fast(clk),
+        .clk_fast(clk_fast),
         .reset(reset),
         .btn_raw_in(~gpio_p2_right),
         .btn_debounced_out(p2_right_db_n)
     );
 
     button_debouncer db_p2_attack(
-        .clk_fast(clk),
+        .clk_fast(clk_fast),
         .reset(reset),
         .btn_raw_in(~gpio_p2_attack),
         .btn_debounced_out(p2_attack_db_n)
@@ -84,7 +85,7 @@ module input_handler (
     reg p2_right_sync1, p2_right_sync2;
     reg p2_attack_sync1, p2_attack_sync2;
 
-    always @(posedge clk or posedge reset) begin
+    always @(posedge clk_game or posedge reset) begin
         if (reset) begin
             p1_left_sync1  <= 1'b0;
             p1_left_sync2  <= 1'b0;
