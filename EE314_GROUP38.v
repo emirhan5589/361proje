@@ -92,7 +92,7 @@ wire timer_reset;
 wire [7:0] game_time_seconds;
 wire winner_p1, winner_p2, game_is_draw;
 
-
+wire [2:0] p1_health, p2_health;
 
     // Internal Wires
 	 
@@ -271,6 +271,7 @@ game_state_controller game_state_ctrl (
     .timer_reset(timer_reset)
 );
 
+// Update menu controller with better positioning
 menu_controller menu_ctrl (
     .pixel_clk(clk_25mhz_pixel),
     .reset(1'b0),
@@ -317,6 +318,23 @@ seven_segment_controller seg7_ctrl (
 assign winner_p1 = 1'b0;
 assign winner_p2 = 1'b0;
 assign game_is_draw = 1'b0;
+
+// Temporary health assignments (for testing)
+assign p1_health = 3'd3;  // Full health for now
+assign p2_health = 3'd3;  // Full health for now
+
+
+// LED Controller instance
+led_controller led_ctrl (
+    .clk_game(clk_game),
+    .reset(1'b0),
+    .current_game_state(current_game_state),
+    .p1_health(p1_health),               // TODO: Connect to actual health logic
+    .p2_health(p2_health),               // TODO: Connect to actual health logic
+    .leds_out(LEDR)
+);
+
+
 //=======================================================
 //  Structural coding
 //=======================================================
