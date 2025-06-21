@@ -1,4 +1,4 @@
-// menu_controller.v (Updated)
+// menu_controller.v (Updated with proper countdown logic)
 module menu_controller (
     input wire pixel_clk,                   // 25MHz pixel clock
     input wire reset,
@@ -9,7 +9,7 @@ module menu_controller (
     // Menu state inputs
     input wire menu_active,                 // High when in menu state
     input wire countdown_active,            // High when in countdown state
-    input wire [7:0] countdown_value,       // Current countdown value
+    input wire [7:0] countdown_value,       // Current countdown value (3, 2, 1, 0 for START)
     input wire game_mode_1p,                // Current selected mode
     
     // Graphics output
@@ -31,8 +31,11 @@ module menu_controller (
     localparam INSTRUCTION_X = 264;         // Center "PRESS START"
     localparam INSTRUCTION_Y = 280;
     
-    localparam COUNTDOWN_X = 316;           // Center countdown (1 char)
+    localparam COUNTDOWN_X = 316;           // Center countdown (single character)
     localparam COUNTDOWN_Y = 200;
+    
+    localparam START_TEXT_X = 296;          // Center "START" (5 chars * 8 = 40, center = 320-20)
+    localparam START_TEXT_Y = 200;
     
     // Colors
     localparam COLOR_MENU_BG = 8'b001_001_01;      // Dark blue background
@@ -94,15 +97,32 @@ module menu_controller (
         .text_pixel_visible(instruction_visible)
     );
     
-    // Countdown text
+    // Countdown text - updated logic
     reg [3:0] countdown_text_id;
+    reg [9:0] countdown_x_pos;
+    
     always @(*) begin
         case (countdown_value)
-            8'd3: countdown_text_id = 4'd4;    // TEXT_COUNT_3
-            8'd2: countdown_text_id = 4'd5;    // TEXT_COUNT_2
-            8'd1: countdown_text_id = 4'd6;    // TEXT_COUNT_1
-            8'd0: countdown_text_id = 4'd7;    // TEXT_START
-            default: countdown_text_id = 4'd4;
+            8'd3: begin
+                countdown_text_id = 4'd4;    // TEXT_COUNT_3
+                countdown_x_pos = COUNTDOWN_X;
+            end
+            8'd2: begin
+                countdown_text_id = 4'd5;    // TEXT_COUNT_2
+                countdown_x_pos = COUNTDOWN_X;
+            end
+            8'd1: begin
+                countdown_text_id = 4'd6;    // TEXT_COUNT_1
+                countdown_x_pos = COUNTDOWN_X;
+            end
+            8'd0: begin
+                countdown_text_id = 4'd7;    // TEXT_START
+                countdown_x_pos = START_TEXT_X;  // Different position for longer text
+            end
+            default: begin
+                countdown_text_id = 4'd4;
+                countdown_x_pos = COUNTDOWN_X;
+            end
         endcase
     end
     
@@ -113,7 +133,7 @@ module menu_controller (
         .pixel_x(pixel_x),
         .pixel_y(pixel_y),
         .text_enable(countdown_active),
-        .text_x_pos(COUNTDOWN_X),
+        .text_x_pos(countdown_x_pos),
         .text_y_pos(COUNTDOWN_Y),
         .text_color_332(COLOR_COUNTDOWN),
         .text_id(countdown_text_id),

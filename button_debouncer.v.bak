@@ -1,0 +1,96 @@
+// button_debouncer.v
+// Filters out mechanical bounces from a button press/release.
+// Assumes raw button input is active-LOW (goes to '0' when pressed).
+// Outputs a debounced signal, also active-LOW.
+
+module button_debouncer (
+    input wire clk_fast,            // System clock (e.g., 50MHz) for the debouncer's timer
+    input wire reset,               // Active-HIGH synchronous reset
+    input wire btn_raw_in,          // Raw, bouncy button input (active-LOW)
+    output reg btn_debounced_out    // Debounced button output (active-LOW)
+);
+
+    // --- Parameters ---
+    // Debounce time: e.g., 10 milliseconds.
+    // Adjust CLK_FREQ_HZ to your actual fast clock frequency.
+    localparam CLK_FREQ_HZ = 50_000_000; // 50 MHz
+    localparam DEBOUNCE_TIME_MS = 10;    // 10 ms
+
+    // Calculate the number of clock cycles for the debounce period.
+    // (CLK_FREQ_HZ / 1000) gives cycles per ms.
+    localparam DEBOUNCE_CYCLES_THRESHOLD = (CLK_FREQ_HZ / 1000) * DEBOUNCE_TIME_MS;
+
+    // Determine the width of the counter needed to count up to DEBOUNCE_CYCLES_THRESHOLD.
+    // $clog2 is a system function that returns the ceiling of log base 2.
+    // Example: if DEBOUNCE_CYCLES_THRESHOLD is 500,000, $clog2(500,000) is 19.
+    // The counter will go from 0 to (DEBOUNCE_CYCLES_THRESHOLD - 1).
+    localparam COUNTER_WIDTH = $clog2(DEBOUNCE_CYCLES_THRESHOLD);
+
+    // --- Internal Registers ---
+    reg [COUNTER_WIDTH-1:0] debounce_counter_reg; // Timer for stability check
+    reg                     btn_intermediate_reg; // Stores the current candidate for the stable state
+    reg                     btn_sync1_reg;        // First stage synchronizer for btn_raw_in
+    reg                     btn_sync2_reg;        // Second stage synchronizer for btn_raw_in (stable raw input)
+
+    // --- Initial state for simulation ---
+    initial begin
+        btn_debounced_out = 1'b1; // Assume button is not pressed initially (HIGH for active-LOW)
+        btn_intermediate_reg = 1'b1;
+        debounce_counter_reg = 0;
+        btn_sync1_reg = 1'b1;
+        btn_sync2_reg = 1'b1;
+    end
+
+    // --- Logic ---
+
+    // Stage 1 & 2: Synchronize the raw input to prevent metastability issues if btn_raw_in is asynchronous
+    // and to get a slightly filtered version of the raw input.
+    // This is good practice even if btn_raw_in comes from within the FPGA if it's from a different clock domain
+    // or if it's a direct external input.
+    always @(posedge clk_fast or posedge reset) begin
+        if (reset) begin
+            btn_sync1_reg <= 1'b1; // Default to not pressed
+            btn_sync2_reg <= 1'b1; // Default to not pressed
+        end else begin
+            btn_sync1_reg <= btn_raw_in;
+            btn_sync2_reg <= btn_sync1_reg;
+        end
+    end
+
+    // Stage 3: Debounce Logic
+    always @(posedge clk_fast or posedge reset) begin
+        if (reset) begin
+            btn_intermediate_reg <= 1'b1; // Assume button is not pressed
+            debounce_counter_reg <= 0;
+            btn_debounced_out    <= 1'b1; // Debounced output also not pressed
+        end else begin
+            // If the (synchronized) raw input differs from our current intermediate (candidate) state,
+            // it means the input has either just changed or is still bouncing.
+            if (btn_sync2_reg != btn_intermediate_reg) begin
+                // Update the intermediate state to this new value from the synchronized raw input.
+                btn_intermediate_reg <= btn_sync2_reg;
+                // Reset the debounce counter, as we need to wait for this new state to be stable.
+                debounce_counter_reg <= 0;
+            end
+            // Else, the synchronized raw input is THE SAME as our intermediate candidate.
+            // Now we check if it has been the same for long enough.
+            else begin
+                // If the counter hasn't reached the threshold yet, keep incrementing.
+                // We count up to (THRESHOLD - 1). When it reaches this, it means THRESHOLD cycles have passed.
+                if (debounce_counter_reg < (DEBOUNCE_CYCLES_THRESHOLD - 1)) begin
+                    debounce_counter_reg <= debounce_counter_reg + 1;
+                end
+                // Else (counter has reached DEBOUNCE_CYCLES_THRESHOLD - 1 and input is still stable)
+                // The input has been stable for DEBOUNCE_CYCLES_THRESHOLD cycles.
+                // So, the intermediate state is now considered the debounced output.
+                else begin
+                    btn_debounced_out <= btn_intermediate_reg;
+                    // The counter can stay at (DEBOUNCE_CYCLES_THRESHOLD - 1) or be reset.
+                    // It will only restart counting from 0 if btn_sync2_reg changes again.
+                    // Keeping it saturated is fine.
+                end
+            end
+        end
+    end
+
+endmodule

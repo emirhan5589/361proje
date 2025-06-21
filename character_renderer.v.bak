@@ -1,0 +1,50 @@
+// character_renderer.v
+// Renders a simple rectangular character based on its position, dimensions, and color.
+
+module character_renderer (
+    // Inputs from VGA timing and higher-level logic
+    input wire        display_enable,         // From VGA controller
+    input wire [9:0]  current_pixel_x,      // Current screen X being drawn
+    input wire [9:0]  current_pixel_y,      // Current screen Y being drawn
+
+    // Inputs describing the character (from player_state_static.v or player_logic.v)
+    input wire [9:0]  char_x_pos_in,        // Character's top-left X
+    input wire [9:0]  char_y_pos_in,        // Character's top-left Y
+    input wire [9:0]  char_width_in,        // Character's width
+    input wire [9:0]  char_height_in,       // Character's height
+    input wire [7:0]  char_color_in_332,    // Character's color (RRRGGGBB)
+
+    // Outputs for the graphics_mixer
+    output reg [7:0]  char_pixel_color_out_332, // Color of the character pixel (meaningful only if visible)
+    output reg        char_is_visible_at_pixel_out // '1' if character is at current_pixel_x/y
+);
+
+    // Internal wires for calculation clarity
+    wire [9:0] char_x_right_edge;
+    wire [9:0] char_y_bottom_edge;
+    wire       is_within_x_bounds;
+    wire       is_within_y_bounds;
+
+    assign char_x_right_edge = char_x_pos_in + char_width_in - 1;
+    assign char_y_bottom_edge = char_y_pos_in + char_height_in - 1;
+
+    assign is_within_x_bounds = (current_pixel_x >= char_x_pos_in) &&
+                                (current_pixel_x <= char_x_right_edge);
+
+    assign is_within_y_bounds = (current_pixel_y >= char_y_pos_in) &&
+                                (current_pixel_y <= char_y_bottom_edge);
+
+    always @(*) begin
+        if (display_enable && is_within_x_bounds && is_within_y_bounds) begin
+            char_is_visible_at_pixel_out = 1'b1;
+            char_pixel_color_out_332     = char_color_in_332; // Output character's color
+        end else begin
+            char_is_visible_at_pixel_out = 1'b0;
+            // This color output is a "don't care" when char_is_visible_at_pixel_out is 0,
+            // as the graphics_mixer will select the background color.
+            // Setting it to black is a safe default.
+            char_pixel_color_out_332     = 8'b00000000;
+        end
+    end
+
+endmodule

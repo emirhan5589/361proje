@@ -1,0 +1,48 @@
+module test_pattern_generator (
+    input wire pixel_clk,           // Pixel clock (~25 MHz)
+    input wire reset,               // Active high reset
+    input wire display_enable,      // HIGH when in active display area
+    input wire [9:0] pixel_x,       // Current x-coordinate (0-639)
+    input wire [9:0] pixel_y,       // Current y-coordinate (0-479)
+    
+    output reg [7:0] color_out_332  // Output color in 3-3-2 RGB format
+);
+
+    // Color definitions in 3-3-2 format (RRRGGGBB)
+    // Red: RRR=111, GGG=000, BB=00 -> 8'b11100000
+    localparam [7:0] COLOR_RED   = 8'b11100000;  // 8'hE0
+    // Green: RRR=000, GGG=111, BB=00 -> 8'b00011100  
+    localparam [7:0] COLOR_GREEN = 8'b00011100;  // 8'h1C
+    // Blue: RRR=000, GGG=000, BB=11 -> 8'b00000011
+    localparam [7:0] COLOR_BLUE  = 8'b00000011;  // 8'h03
+    // Black for inactive areas
+    localparam [7:0] COLOR_BLACK = 8'b00000000;  // 8'h00
+
+    // Boundary definitions for vertical color bars
+    // Screen width is 640 pixels (0-639)
+    // Red: 0 to 212 (213 pixels)
+    // Green: 213 to 425 (213 pixels) 
+    // Blue: 426 to 639 (214 pixels)
+    localparam [9:0] RED_GREEN_BOUNDARY = 10'd213;
+    localparam [9:0] GREEN_BLUE_BOUNDARY = 10'd426;
+
+    always @(posedge pixel_clk or posedge reset) begin
+        if (reset) begin
+            color_out_332 <= COLOR_BLACK;
+        end else begin
+            if (display_enable) begin
+                // Generate vertical color bars based on pixel_x position
+                if (pixel_x < RED_GREEN_BOUNDARY) begin
+                    color_out_332 <= COLOR_RED;        // Red bar: x = 0 to 212
+                end else if (pixel_x < GREEN_BLUE_BOUNDARY) begin
+                    color_out_332 <= COLOR_GREEN;      // Green bar: x = 213 to 425
+                end else begin
+                    color_out_332 <= COLOR_BLUE;       // Blue bar: x = 426 to 639
+                end
+            end else begin
+                color_out_332 <= COLOR_BLACK;          // Black during blanking periods
+            end
+        end
+    end
+
+endmodule

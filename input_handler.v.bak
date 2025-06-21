@@ -1,0 +1,112 @@
+// input_handler.v
+// Handles debouncing and synchronization of player inputs.
+// For now, focused on Player 1 controls.
+
+module input_handler (
+    // Clock and Reset Inputs
+    input wire clk_50Mhz,           // Fast clock for debouncing
+    input wire clk_60Hz_game,       // Game logic clock for output synchronization
+    input wire reset,               // Active-HIGH system reset
+
+    // Player 1 Raw Button Inputs (Active LOW from FPGA KEYs)
+    input wire p1_key_left_raw_in,
+    input wire p1_key_right_raw_in,
+    input wire p1_key_attack_raw_in,
+    input wire p1_key_confirm_raw_in, // For menu start, etc.
+
+    // Player 1 Processed Command Outputs (Active HIGH, synchronized to clk_60Hz_game)
+    output reg p1_move_left_cmd_out,
+    output reg p1_move_right_cmd_out,
+    output reg p1_attack_cmd_out,
+    output reg p1_confirm_cmd_out
+);
+
+    // --- Wires for Debounced Signals (Active LOW output from button_debouncer) ---
+    wire p1_left_debounced_L;
+    wire p1_right_debounced_L;
+    wire p1_attack_debounced_L;
+    wire p1_confirm_debounced_L;
+
+    // --- Instantiate Debouncers (using clk_50Mhz) ---
+    // Assuming button_debouncer.v exists and works as previously discussed
+    // (Input: clk_fast, reset, btn_raw_in (active LOW), Output: btn_debounced_out (active LOW))
+
+    button_debouncer deb_p1_left (
+        .clk_fast(clk_50Mhz),
+        .reset(reset),
+        .btn_raw_in(p1_key_left_raw_in),
+        .btn_debounced_out(p1_left_debounced_L)
+    );
+
+    button_debouncer deb_p1_right (
+        .clk_fast(clk_50Mhz),
+        .reset(reset),
+        .btn_raw_in(p1_key_right_raw_in),
+        .btn_debounced_out(p1_right_debounced_L)
+    );
+
+    button_debouncer deb_p1_attack (
+        .clk_fast(clk_50Mhz),
+        .reset(reset),
+        .btn_raw_in(p1_key_attack_raw_in),
+        .btn_debounced_out(p1_attack_debounced_L)
+    );
+
+    button_debouncer deb_p1_confirm (
+        .clk_fast(clk_50Mhz),
+        .reset(reset),
+        .btn_raw_in(p1_key_confirm_raw_in),
+        .btn_debounced_out(p1_confirm_debounced_L)
+    );
+
+    // --- Synchronizers (2-flop) from clk_50Mhz domain to clk_60Hz_game domain ---
+    // These will hold the active HIGH version of the debounced signals.
+    // The output of the debouncer is active LOW, so we invert it before synchronizing.
+    reg p1_left_sync1, p1_left_sync2;
+    reg p1_right_sync1, p1_right_sync2;
+    reg p1_attack_sync1, p1_attack_sync2;
+    reg p1_confirm_sync1, p1_confirm_sync2;
+
+    // Initial block for simulation (good practice)
+    initial begin
+        p1_move_left_cmd_out = 1'b0;
+        p1_move_right_cmd_out = 1'b0;
+        p1_attack_cmd_out = 1'b0;
+        p1_confirm_cmd_out = 1'b0;
+
+        p1_left_sync1 = 1'b0; p1_left_sync2 = 1'b0;
+        p1_right_sync1 = 1'b0; p1_right_sync2 = 1'b0;
+        p1_attack_sync1 = 1'b0; p1_attack_sync2 = 1'b0;
+        p1_confirm_sync1 = 1'b0; p1_confirm_sync2 = 1'b0;
+    end
+
+    always @(posedge clk_60Hz_game or posedge reset) begin
+        if (reset) begin
+            p1_left_sync1 <= 1'b0; p1_left_sync2 <= 1'b0; p1_move_left_cmd_out <= 1'b0;
+            p1_right_sync1 <= 1'b0; p1_right_sync2 <= 1'b0; p1_move_right_cmd_out <= 1'b0;
+            p1_attack_sync1 <= 1'b0; p1_attack_sync2 <= 1'b0; p1_attack_cmd_out <= 1'b0;
+            p1_confirm_sync1 <= 1'b0; p1_confirm_sync2 <= 1'b0; p1_confirm_cmd_out <= 1'b0;
+        end else begin
+            // Player 1 Move Left
+            p1_left_sync1         <= ~p1_left_debounced_L;    // Invert active-LOW debounced signal to active-HIGH
+            p1_left_sync2         <= p1_left_sync1;
+            p1_move_left_cmd_out  <= p1_left_sync2;           // Final output is synchronized active-HIGH
+
+            // Player 1 Move Right
+            p1_right_sync1        <= ~p1_right_debounced_L;
+            p1_right_sync2        <= p1_right_sync1;
+            p1_move_right_cmd_out <= p1_right_sync2;
+
+            // Player 1 Attack
+            p1_attack_sync1       <= ~p1_attack_debounced_L;
+            p1_attack_sync2       <= p1_attack_sync1;
+            p1_attack_cmd_out     <= p1_attack_sync2;
+
+            // Player 1 Confirm
+            p1_confirm_sync1      <= ~p1_confirm_debounced_L;
+            p1_confirm_sync2      <= p1_confirm_sync1;
+            p1_confirm_cmd_out    <= p1_confirm_sync2;
+        end
+    end
+
+endmodule

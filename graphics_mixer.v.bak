@@ -1,0 +1,26 @@
+// graphics_mixer.v
+// Combines background and character graphics based on character visibility.
+// For now, character is always on top of the background if visible.
+
+module graphics_mixer (
+    // Input pixel data from different graphics sources
+    input wire [7:0] background_color_in_332,      // From background_generator
+    input wire [7:0] char_pixel_color_in_332,    // From character_renderer
+    input wire       char_is_visible_at_pixel_in, // From character_renderer
+
+    // Output final pixel color
+    output reg [7:0] final_pixel_color_out_332   // To vga_driver_adapted
+);
+
+    // Combinational logic to select the final pixel color
+    always @(*) begin
+        if (char_is_visible_at_pixel_in) begin
+            // If the character is visible at this pixel, output the character's color
+            final_pixel_color_out_332 = char_pixel_color_in_332;
+        end else begin
+            // Otherwise, output the background color
+            final_pixel_color_out_332 = background_color_in_332;
+        end
+    end
+
+endmodule

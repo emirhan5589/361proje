@@ -1,4 +1,4 @@
-// text_renderer.v
+// text_renderer.v (Updated with START text)
 module text_renderer (
     input wire pixel_clk,
     input wire reset,
@@ -45,21 +45,20 @@ module text_renderer (
     
     // Text boundaries based on text_id
     reg [3:0] text_width;  // Number of characters
-    // Update the text width case statement:
-always @(*) begin
-    case (text_id)
-        TEXT_MENU:        text_width = 4;   // "MENU"
-        TEXT_1_PLAYER:    text_width = 3;   // "1-P" (simplified)
-        TEXT_2_PLAYER:    text_width = 3;   // "2-P" (simplified)
-        TEXT_PRESS_BUTTON: text_width = 11;  // "PRESS START"
-        TEXT_COUNT_3:     text_width = 1;   // "3"
-        TEXT_COUNT_2:     text_width = 1;   // "2"
-        TEXT_COUNT_1:     text_width = 1;   // "1"
-        TEXT_START:       text_width = 5;   // "START"
-        default:          text_width = 0;
-    endcase
-end
-
+    
+    always @(*) begin
+        case (text_id)
+            TEXT_MENU:        text_width = 4;   // "MENU"
+            TEXT_1_PLAYER:    text_width = 3;   // "1-P" (simplified)
+            TEXT_2_PLAYER:    text_width = 3;   // "2-P" (simplified)
+            TEXT_PRESS_BUTTON: text_width = 11; // "PRESS START"
+            TEXT_COUNT_3:     text_width = 1;   // "3"
+            TEXT_COUNT_2:     text_width = 1;   // "2"
+            TEXT_COUNT_1:     text_width = 1;   // "1"
+            TEXT_START:       text_width = 5;   // "START"
+            default:          text_width = 0;
+        endcase
+    end
     
     // Check if pixel is within text bounds
     wire in_text_bounds = text_enable && display_enable &&
@@ -74,231 +73,336 @@ end
         
         if (in_text_bounds) begin
             case (text_id)
-				
-				
-				
-				TEXT_PRESS_BUTTON: begin
-    case (char_x)
-        0: begin  // 'P'
-            case (pixel_in_char_y)
-                0:  font_data = 8'b11111110;
-                1:  font_data = 8'b11000011;
-                2:  font_data = 8'b11000011;
-                3:  font_data = 8'b11000011;
-                4:  font_data = 8'b11111110;
-                5:  font_data = 8'b11000000;
-                6:  font_data = 8'b11000000;
-                7:  font_data = 8'b11000000;
-                8:  font_data = 8'b11000000;
-                9:  font_data = 8'b11000000;
-                10: font_data = 8'b11000000;
-                11: font_data = 8'b11000000;
-                12: font_data = 8'b11000000;
-                13: font_data = 8'b11000000;
-                14: font_data = 8'b11000000;
-                15: font_data = 8'b00000000;
-                default: font_data = 8'h00;
-            endcase
-        end
-        1: begin  // 'R'
-            case (pixel_in_char_y)
-                0:  font_data = 8'b11111110;
-                1:  font_data = 8'b11000011;
-                2:  font_data = 8'b11000011;
-                3:  font_data = 8'b11000011;
-                4:  font_data = 8'b11111110;
-                5:  font_data = 8'b11111000;
-                6:  font_data = 8'b11001100;
-                7:  font_data = 8'b11000110;
-                8:  font_data = 8'b11000011;
-                9:  font_data = 8'b11000011;
-                10: font_data = 8'b11000011;
-                11: font_data = 8'b11000011;
-                12: font_data = 8'b11000011;
-                13: font_data = 8'b11000011;
-                14: font_data = 8'b11000011;
-                15: font_data = 8'b00000000;
-                default: font_data = 8'h00;
-            endcase
-        end
-        2: begin  // 'E'
-            case (pixel_in_char_y)
-                0:  font_data = 8'b11111111;
-                1:  font_data = 8'b11000000;
-                2:  font_data = 8'b11000000;
-                3:  font_data = 8'b11000000;
-                4:  font_data = 8'b11111110;
-                5:  font_data = 8'b11000000;
-                6:  font_data = 8'b11000000;
-                7:  font_data = 8'b11000000;
-                8:  font_data = 8'b11000000;
-                9:  font_data = 8'b11000000;
-                10: font_data = 8'b11000000;
-                11: font_data = 8'b11000000;
-                12: font_data = 8'b11000000;
-                13: font_data = 8'b11000000;
-                14: font_data = 8'b11111111;
-                15: font_data = 8'b00000000;
-                default: font_data = 8'h00;
-            endcase
-        end
-        3: begin  // 'S'
-            case (pixel_in_char_y)
-                0:  font_data = 8'b01111110;
-                1:  font_data = 8'b11000011;
-                2:  font_data = 8'b11000000;
-                3:  font_data = 8'b11000000;
-                4:  font_data = 8'b01111110;
-                5:  font_data = 8'b00000011;
-                6:  font_data = 8'b00000011;
-                7:  font_data = 8'b00000011;
-                8:  font_data = 8'b00000011;
-                9:  font_data = 8'b00000011;
-                10: font_data = 8'b00000011;
-                11: font_data = 8'b11000011;
-                12: font_data = 8'b01111110;
-                13: font_data = 8'b00000000;
-                14: font_data = 8'b00000000;
-                15: font_data = 8'b00000000;
-                default: font_data = 8'h00;
-            endcase
-        end
-        4: begin  // 'S'
-            case (pixel_in_char_y)
-                0:  font_data = 8'b01111110;
-                1:  font_data = 8'b11000011;
-                2:  font_data = 8'b11000000;
-                3:  font_data = 8'b11000000;
-                4:  font_data = 8'b01111110;
-                5:  font_data = 8'b00000011;
-                6:  font_data = 8'b00000011;
-                7:  font_data = 8'b00000011;
-                8:  font_data = 8'b00000011;
-                9:  font_data = 8'b00000011;
-                10: font_data = 8'b00000011;
-                11: font_data = 8'b11000011;
-                12: font_data = 8'b01111110;
-                13: font_data = 8'b00000000;
-                14: font_data = 8'b00000000;
-                15: font_data = 8'b00000000;
-                default: font_data = 8'h00;
-            endcase
-        end
-        5: begin  // ' ' (space)
-            font_data = 8'h00;
-        end
-        6: begin  // 'S'
-            case (pixel_in_char_y)
-                0:  font_data = 8'b01111110;
-                1:  font_data = 8'b11000011;
-                2:  font_data = 8'b11000000;
-                3:  font_data = 8'b11000000;
-                4:  font_data = 8'b01111110;
-                5:  font_data = 8'b00000011;
-                6:  font_data = 8'b00000011;
-                7:  font_data = 8'b00000011;
-                8:  font_data = 8'b00000011;
-                9:  font_data = 8'b00000011;
-                10: font_data = 8'b00000011;
-                11: font_data = 8'b11000011;
-                12: font_data = 8'b01111110;
-                13: font_data = 8'b00000000;
-                14: font_data = 8'b00000000;
-                15: font_data = 8'b00000000;
-                default: font_data = 8'h00;
-            endcase
-        end
-        7: begin  // 'T'
-            case (pixel_in_char_y)
-                0:  font_data = 8'b11111111;
-                1:  font_data = 8'b00011000;
-                2:  font_data = 8'b00011000;
-                3:  font_data = 8'b00011000;
-                4:  font_data = 8'b00011000;
-                5:  font_data = 8'b00011000;
-                6:  font_data = 8'b00011000;
-                7:  font_data = 8'b00011000;
-                8:  font_data = 8'b00011000;
-                9:  font_data = 8'b00011000;
-                10: font_data = 8'b00011000;
-                11: font_data = 8'b00011000;
-                12: font_data = 8'b00011000;
-                13: font_data = 8'b00011000;
-                14: font_data = 8'b00011000;
-                15: font_data = 8'b00000000;
-                default: font_data = 8'h00;
-            endcase
-        end
-        8: begin  // 'A'
-            case (pixel_in_char_y)
-                0:  font_data = 8'b00111100;
-                1:  font_data = 8'b01100110;
-                2:  font_data = 8'b11000011;
-                3:  font_data = 8'b11000011;
-                4:  font_data = 8'b11000011;
-                5:  font_data = 8'b11111111;
-                6:  font_data = 8'b11000011;
-                7:  font_data = 8'b11000011;
-                8:  font_data = 8'b11000011;
-                9:  font_data = 8'b11000011;
-                10: font_data = 8'b11000011;
-                11: font_data = 8'b11000011;
-                12: font_data = 8'b11000011;
-                13: font_data = 8'b11000011;
-                14: font_data = 8'b11000011;
-                15: font_data = 8'b00000000;
-                default: font_data = 8'h00;
-            endcase
-        end
-        9: begin  // 'R'
-            case (pixel_in_char_y)
-                0:  font_data = 8'b11111110;
-                1:  font_data = 8'b11000011;
-                2:  font_data = 8'b11000011;
-                3:  font_data = 8'b11000011;
-                4:  font_data = 8'b11111110;
-                5:  font_data = 8'b11111000;
-                6:  font_data = 8'b11001100;
-                7:  font_data = 8'b11000110;
-                8:  font_data = 8'b11000011;
-                9:  font_data = 8'b11000011;
-                10: font_data = 8'b11000011;
-                11: font_data = 8'b11000011;
-                12: font_data = 8'b11000011;
-                13: font_data = 8'b11000011;
-                14: font_data = 8'b11000011;
-                15: font_data = 8'b00000000;
-                default: font_data = 8'h00;
-            endcase
-        end
-        10: begin  // 'T'
-            case (pixel_in_char_y)
-                0:  font_data = 8'b11111111;
-                1:  font_data = 8'b00011000;
-                2:  font_data = 8'b00011000;
-                3:  font_data = 8'b00011000;
-                4:  font_data = 8'b00011000;
-                5:  font_data = 8'b00011000;
-                6:  font_data = 8'b00011000;
-                7:  font_data = 8'b00011000;
-                8:  font_data = 8'b00011000;
-                9:  font_data = 8'b00011000;
-                10: font_data = 8'b00011000;
-                11: font_data = 8'b00011000;
-                12: font_data = 8'b00011000;
-                13: font_data = 8'b00011000;
-                14: font_data = 8'b00011000;
-                15: font_data = 8'b00000000;
-                default: font_data = 8'h00;
-            endcase
-        end
-        default: font_data = 8'h00;
-    endcase
-end
-				
-				
-				
-				
+                TEXT_START: begin
+                    case (char_x)
+                        0: begin  // 'S'
+                            case (pixel_in_char_y)
+                                0:  font_data = 8'b01111110;
+                                1:  font_data = 8'b11000011;
+                                2:  font_data = 8'b11000000;
+                                3:  font_data = 8'b11000000;
+                                4:  font_data = 8'b01111110;
+                                5:  font_data = 8'b00000011;
+                                6:  font_data = 8'b00000011;
+                                7:  font_data = 8'b00000011;
+                                8:  font_data = 8'b00000011;
+                                9:  font_data = 8'b00000011;
+                                10: font_data = 8'b00000011;
+                                11: font_data = 8'b11000011;
+                                12: font_data = 8'b01111110;
+                                13: font_data = 8'b00000000;
+                                14: font_data = 8'b00000000;
+                                15: font_data = 8'b00000000;
+                                default: font_data = 8'h00;
+                            endcase
+                        end
+                        1: begin  // 'T'
+                            case (pixel_in_char_y)
+                                0:  font_data = 8'b11111111;
+                                1:  font_data = 8'b00011000;
+                                2:  font_data = 8'b00011000;
+                                3:  font_data = 8'b00011000;
+                                4:  font_data = 8'b00011000;
+                                5:  font_data = 8'b00011000;
+                                6:  font_data = 8'b00011000;
+                                7:  font_data = 8'b00011000;
+                                8:  font_data = 8'b00011000;
+                                9:  font_data = 8'b00011000;
+                                10: font_data = 8'b00011000;
+                                11: font_data = 8'b00011000;
+                                12: font_data = 8'b00011000;
+                                13: font_data = 8'b00011000;
+                                14: font_data = 8'b00011000;
+                                15: font_data = 8'b00000000;
+                                default: font_data = 8'h00;
+                            endcase
+                        end
+                        2: begin  // 'A'
+                            case (pixel_in_char_y)
+                                0:  font_data = 8'b00111100;
+                                1:  font_data = 8'b01100110;
+                                2:  font_data = 8'b11000011;
+                                3:  font_data = 8'b11000011;
+                                4:  font_data = 8'b11000011;
+                                5:  font_data = 8'b11111111;
+                                6:  font_data = 8'b11000011;
+                                7:  font_data = 8'b11000011;
+                                8:  font_data = 8'b11000011;
+                                9:  font_data = 8'b11000011;
+                                10: font_data = 8'b11000011;
+                                11: font_data = 8'b11000011;
+                                12: font_data = 8'b11000011;
+                                13: font_data = 8'b11000011;
+                                14: font_data = 8'b11000011;
+                                15: font_data = 8'b00000000;
+                                default: font_data = 8'h00;
+                            endcase
+                        end
+                        3: begin  // 'R'
+                            case (pixel_in_char_y)
+                                0:  font_data = 8'b11111110;
+                                1:  font_data = 8'b11000011;
+                                2:  font_data = 8'b11000011;
+                                3:  font_data = 8'b11000011;
+                                4:  font_data = 8'b11111110;
+                                5:  font_data = 8'b11111000;
+                                6:  font_data = 8'b11001100;
+                                7:  font_data = 8'b11000110;
+                                8:  font_data = 8'b11000011;
+                                9:  font_data = 8'b11000011;
+                                10: font_data = 8'b11000011;
+                                11: font_data = 8'b11000011;
+                                12: font_data = 8'b11000011;
+                                13: font_data = 8'b11000011;
+                                14: font_data = 8'b11000011;
+                                15: font_data = 8'b00000000;
+                                default: font_data = 8'h00;
+                            endcase
+                        end
+                        4: begin  // 'T'
+                            case (pixel_in_char_y)
+                                0:  font_data = 8'b11111111;
+                                1:  font_data = 8'b00011000;
+                                2:  font_data = 8'b00011000;
+                                3:  font_data = 8'b00011000;
+                                4:  font_data = 8'b00011000;
+                                5:  font_data = 8'b00011000;
+                                6:  font_data = 8'b00011000;
+                                7:  font_data = 8'b00011000;
+                                8:  font_data = 8'b00011000;
+                                9:  font_data = 8'b00011000;
+                                10: font_data = 8'b00011000;
+                                11: font_data = 8'b00011000;
+                                12: font_data = 8'b00011000;
+                                13: font_data = 8'b00011000;
+                                14: font_data = 8'b00011000;
+                                15: font_data = 8'b00000000;
+                                default: font_data = 8'h00;
+                            endcase
+                        end
+                        default: font_data = 8'h00;
+                    endcase
+                end
+                
+                TEXT_PRESS_BUTTON: begin
+                    case (char_x)
+                        0: begin  // 'P'
+                            case (pixel_in_char_y)
+                                0:  font_data = 8'b11111110;
+                                1:  font_data = 8'b11000011;
+                                2:  font_data = 8'b11000011;
+                                3:  font_data = 8'b11000011;
+                                4:  font_data = 8'b11111110;
+                                5:  font_data = 8'b11000000;
+                                6:  font_data = 8'b11000000;
+                                7:  font_data = 8'b11000000;
+                                8:  font_data = 8'b11000000;
+                                9:  font_data = 8'b11000000;
+                                10: font_data = 8'b11000000;
+                                11: font_data = 8'b11000000;
+                                12: font_data = 8'b11000000;
+                                13: font_data = 8'b11000000;
+                                14: font_data = 8'b11000000;
+                                15: font_data = 8'b00000000;
+                                default: font_data = 8'h00;
+                            endcase
+                        end
+                        1: begin  // 'R'
+                            case (pixel_in_char_y)
+                                0:  font_data = 8'b11111110;
+                                1:  font_data = 8'b11000011;
+                                2:  font_data = 8'b11000011;
+                                3:  font_data = 8'b11000011;
+                                4:  font_data = 8'b11111110;
+                                5:  font_data = 8'b11111000;
+                                6:  font_data = 8'b11001100;
+                                7:  font_data = 8'b11000110;
+                                8:  font_data = 8'b11000011;
+                                9:  font_data = 8'b11000011;
+                                10: font_data = 8'b11000011;
+                                11: font_data = 8'b11000011;
+                                12: font_data = 8'b11000011;
+                                13: font_data = 8'b11000011;
+                                14: font_data = 8'b11000011;
+                                15: font_data = 8'b00000000;
+                                default: font_data = 8'h00;
+                            endcase
+                        end
+                        2: begin  // 'E'
+                            case (pixel_in_char_y)
+                                0:  font_data = 8'b11111111;
+                                1:  font_data = 8'b11000000;
+                                2:  font_data = 8'b11000000;
+                                3:  font_data = 8'b11000000;
+                                4:  font_data = 8'b11111110;
+                                5:  font_data = 8'b11000000;
+                                6:  font_data = 8'b11000000;
+                                7:  font_data = 8'b11000000;
+                                8:  font_data = 8'b11000000;
+                                9:  font_data = 8'b11000000;
+                                10: font_data = 8'b11000000;
+                                11: font_data = 8'b11000000;
+                                12: font_data = 8'b11000000;
+                                13: font_data = 8'b11000000;
+                                14: font_data = 8'b11111111;
+                                15: font_data = 8'b00000000;
+                                default: font_data = 8'h00;
+                            endcase
+                        end
+                        3: begin  // 'S'
+                            case (pixel_in_char_y)
+                                0:  font_data = 8'b01111110;
+                                1:  font_data = 8'b11000011;
+                                2:  font_data = 8'b11000000;
+                                3:  font_data = 8'b11000000;
+                                4:  font_data = 8'b01111110;
+                                5:  font_data = 8'b00000011;
+                                6:  font_data = 8'b00000011;
+                                7:  font_data = 8'b00000011;
+                                8:  font_data = 8'b00000011;
+                                9:  font_data = 8'b00000011;
+                                10: font_data = 8'b00000011;
+                                11: font_data = 8'b11000011;
+                                12: font_data = 8'b01111110;
+                                13: font_data = 8'b00000000;
+                                14: font_data = 8'b00000000;
+                                15: font_data = 8'b00000000;
+                                default: font_data = 8'h00;
+                            endcase
+                        end
+                        4: begin  // 'S'
+                            case (pixel_in_char_y)
+                                0:  font_data = 8'b01111110;
+                                1:  font_data = 8'b11000011;
+                                2:  font_data = 8'b11000000;
+                                3:  font_data = 8'b11000000;
+                                4:  font_data = 8'b01111110;
+                                5:  font_data = 8'b00000011;
+                                6:  font_data = 8'b00000011;
+                                7:  font_data = 8'b00000011;
+                                8:  font_data = 8'b00000011;
+                                9:  font_data = 8'b00000011;
+                                10: font_data = 8'b00000011;
+                                11: font_data = 8'b11000011;
+                                12: font_data = 8'b01111110;
+                                13: font_data = 8'b00000000;
+                                14: font_data = 8'b00000000;
+                                15: font_data = 8'b00000000;
+                                default: font_data = 8'h00;
+                            endcase
+                        end
+                        5: begin  // ' ' (space)
+                            font_data = 8'h00;
+                        end
+                        6: begin  // 'S'
+                            case (pixel_in_char_y)
+                                0:  font_data = 8'b01111110;
+                                1:  font_data = 8'b11000011;
+                                2:  font_data = 8'b11000000;
+                                3:  font_data = 8'b11000000;
+                                4:  font_data = 8'b01111110;
+                                5:  font_data = 8'b00000011;
+                                6:  font_data = 8'b00000011;
+                                7:  font_data = 8'b00000011;
+                                8:  font_data = 8'b00000011;
+                                9:  font_data = 8'b00000011;
+                                10: font_data = 8'b00000011;
+                                11: font_data = 8'b11000011;
+                                12: font_data = 8'b01111110;
+                                13: font_data = 8'b00000000;
+                                14: font_data = 8'b00000000;
+                                15: font_data = 8'b00000000;
+                                default: font_data = 8'h00;
+                            endcase
+                        end
+                        7: begin  // 'T'
+                            case (pixel_in_char_y)
+                                0:  font_data = 8'b11111111;
+                                1:  font_data = 8'b00011000;
+                                2:  font_data = 8'b00011000;
+                                3:  font_data = 8'b00011000;
+                                4:  font_data = 8'b00011000;
+                                5:  font_data = 8'b00011000;
+                                6:  font_data = 8'b00011000;
+                                7:  font_data = 8'b00011000;
+                                8:  font_data = 8'b00011000;
+                                9:  font_data = 8'b00011000;
+                                10: font_data = 8'b00011000;
+                                11: font_data = 8'b00011000;
+                                12: font_data = 8'b00011000;
+                                13: font_data = 8'b00011000;
+                                14: font_data = 8'b00011000;
+                                15: font_data = 8'b00000000;
+                                default: font_data = 8'h00;
+                            endcase
+                        end
+                        8: begin  // 'A'
+                            case (pixel_in_char_y)
+                                0:  font_data = 8'b00111100;
+                                1:  font_data = 8'b01100110;
+                                2:  font_data = 8'b11000011;
+                                3:  font_data = 8'b11000011;
+                                4:  font_data = 8'b11000011;
+                                5:  font_data = 8'b11111111;
+                                6:  font_data = 8'b11000011;
+                                7:  font_data = 8'b11000011;
+                                8:  font_data = 8'b11000011;
+                                9:  font_data = 8'b11000011;
+                                10: font_data = 8'b11000011;
+                                11: font_data = 8'b11000011;
+                                12: font_data = 8'b11000011;
+                                13: font_data = 8'b11000011;
+                                14: font_data = 8'b11000011;
+                                15: font_data = 8'b00000000;
+                                default: font_data = 8'h00;
+                            endcase
+                        end
+                        9: begin  // 'R'
+                            case (pixel_in_char_y)
+                                0:  font_data = 8'b11111110;
+                                1:  font_data = 8'b11000011;
+                                2:  font_data = 8'b11000011;
+                                3:  font_data = 8'b11000011;
+                                4:  font_data = 8'b11111110;
+                                5:  font_data = 8'b11111000;
+                                6:  font_data = 8'b11001100;
+                                7:  font_data = 8'b11000110;
+                                8:  font_data = 8'b11000011;
+                                9:  font_data = 8'b11000011;
+                                10: font_data = 8'b11000011;
+                                11: font_data = 8'b11000011;
+                                12: font_data = 8'b11000011;
+                                13: font_data = 8'b11000011;
+                                14: font_data = 8'b11000011;
+                                15: font_data = 8'b00000000;
+                                default: font_data = 8'h00;
+                            endcase
+                        end
+                        10: begin  // 'T'
+                            case (pixel_in_char_y)
+                                0:  font_data = 8'b11111111;
+                                1:  font_data = 8'b00011000;
+                                2:  font_data = 8'b00011000;
+                                3:  font_data = 8'b00011000;
+                                4:  font_data = 8'b00011000;
+                                5:  font_data = 8'b00011000;
+                                6:  font_data = 8'b00011000;
+                                7:  font_data = 8'b00011000;
+                                8:  font_data = 8'b00011000;
+                                9:  font_data = 8'b00011000;
+                                10: font_data = 8'b00011000;
+                                11: font_data = 8'b00011000;
+                                12: font_data = 8'b00011000;
+                                13: font_data = 8'b00011000;
+                                14: font_data = 8'b00011000;
+                                15: font_data = 8'b00000000;
+                                default: font_data = 8'h00;
+                            endcase
+                        end
+                        default: font_data = 8'h00;
+                    endcase
+                end
+                
                 TEXT_MENU: begin
                     case (char_x)
                         0: begin  // 'M'
@@ -419,7 +523,7 @@ end
                                 default: font_data = 8'h00;
                             endcase
                         end
-                        2: begin  // 'P' (start of PLAYER)
+                        2: begin  // 'P'
                             case (pixel_in_char_y)
                                 0:  font_data = 8'b11111110;
                                 1:  font_data = 8'b11000011;
@@ -440,7 +544,6 @@ end
                                 default: font_data = 8'h00;
                             endcase
                         end
-                        // Add more characters for "LAYER" if needed, or simplify to "1P"
                         default: font_data = 8'h00;
                     endcase
                 end
@@ -475,7 +578,7 @@ end
                                 default: font_data = 8'h00;
                             endcase
                         end
-                        2: begin  // 'P' (start of PLAYER)
+                        2: begin  // 'P'
                             case (pixel_in_char_y)
                                 0:  font_data = 8'b11111110;
                                 1:  font_data = 8'b11000011;
