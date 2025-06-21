@@ -1,0 +1,32 @@
+module game_clocks (
+    input wire clk_50Mhz_in,
+    input wire reset_in,
+    output wire clk_25Mhz_out,
+    output wire clk_60Hz_out
+);
+
+    // For 25MHz VGA pixel clock from 50MHz
+    // Division factor D = 50MHz / 25MHz = 2
+    our_clk_divider #(
+        .D(2)
+    ) vga_clk_divider_inst (
+        .clk(clk_50Mhz_in),
+        .rst(reset_in),
+        .clk_divided(clk_25Mhz_out)
+    );
+
+    // For 60Hz game logic clock from 50MHz
+    // Division factor D = 50,000,000 / 60 = 833333 (approx)
+    // Let's use an even number close to this for cleaner D/2.
+    // If D = 833334, F_out = 50MHz / 833334 = 59.999952 Hz. This is excellent.
+    // Then D/2 - 1 = 416667 - 1 = 416666. Counter goes 0 to 416666.
+    our_clk_divider #(
+        .D(833334) // Or 833333 if you prefer to stick to the exact fraction, understanding truncation.
+                   // Let's use 833334 for an even D.
+    ) game_logic_clk_divider_inst (
+        .clk(clk_50Mhz_in),
+        .rst(reset_in),
+        .clk_divided(clk_60Hz_out)
+    );
+
+endmodule

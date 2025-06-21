@@ -1,0 +1,28 @@
+// background_generator.v (Solid Color)
+module background_generator (
+    input wire pixel_clk,         // ~25 MHz pixel clock (can be omitted if purely combinational)
+    input wire reset,             // Active high reset (can be omitted if purely combinational)
+    input wire display_enable,   // From vga_driver_adapted
+    input wire [9:0] pixel_x,    // From vga_driver_adapted (unused for solid color)
+    input wire [9:0] pixel_y,    // From vga_driver_adapted (unused for solid color)
+    output reg [7:0] color_out_332 // To vga_driver_adapted (RRRGGGBB format)
+);
+
+    // Define colors in RRRGGGBB format
+    localparam COLOR_BLACK      = 8'b00000000;
+    localparam BACKGROUND_COLOR = 8'b00100101; // Example: A medium-dark blue (R=1, G=1, B=1)
+                                               // RRR = 001 (dim red)
+                                               // GGG = 001 (dim green)
+                                               // BBB = 01  (medium blue)
+                                               // Choose any non-black color you like!
+                                               // Another option: Grey: 8'b10010010 (R=4, G=4, B=2)
+
+    always @(*) begin // Combinational logic
+        if (display_enable) begin
+            color_out_332 = BACKGROUND_COLOR;
+        end else begin
+            color_out_332 = COLOR_BLACK; // Output black when not in display area
+        end
+    end
+
+endmodule

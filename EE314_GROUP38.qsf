@@ -5,7 +5,7 @@
 set_global_assignment -name FAMILY "Cyclone V"
 set_global_assignment -name DEVICE 5CSEMA5F31C6
 set_global_assignment -name TOP_LEVEL_ENTITY "EE314_GROUP38"
-set_global_assignment -name ORIGINAL_QUARTUS_VERSION "15.1.0"
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 15.1.0
 set_global_assignment -name LAST_QUARTUS_VERSION "23.1std.1 Lite Edition"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "19:29:31 MAY 26,2025"
 set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
@@ -384,13 +384,13 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO[5]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO[6]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO[7]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO[8]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO[9]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO_P2[0]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO[10]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO[11]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO_P2[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO[12]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO[13]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO_P2[2]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO[14]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO[15]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO_P2[3]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO[16]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO[17]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO[18]
@@ -420,13 +420,13 @@ set_location_assignment PIN_AK18 -to GPIO[5]
 set_location_assignment PIN_AK19 -to GPIO[6]
 set_location_assignment PIN_AJ19 -to GPIO[7]
 set_location_assignment PIN_AJ17 -to GPIO[8]
-set_location_assignment PIN_AJ16 -to GPIO[9]
+set_location_assignment PIN_AJ16 -to GPIO_P2[0]
 set_location_assignment PIN_AH18 -to GPIO[10]
-set_location_assignment PIN_AH17 -to GPIO[11]
+set_location_assignment PIN_AH17 -to GPIO_P2[1]
 set_location_assignment PIN_AG16 -to GPIO[12]
-set_location_assignment PIN_AE16 -to GPIO[13]
+set_location_assignment PIN_AE16 -to GPIO_P2[2]
 set_location_assignment PIN_AF16 -to GPIO[14]
-set_location_assignment PIN_AG17 -to GPIO[15]
+set_location_assignment PIN_AG17 -to GPIO_P2[3]
 set_location_assignment PIN_AA18 -to GPIO[16]
 set_location_assignment PIN_AA19 -to GPIO[17]
 set_location_assignment PIN_AE17 -to GPIO[18]
@@ -473,4 +473,14 @@ set_global_assignment -name VERILOG_FILE graphics_mixer.v
 set_global_assignment -name VERILOG_FILE input_handler.v
 set_global_assignment -name VERILOG_FILE button_debouncer.v
 set_global_assignment -name VERILOG_FILE player_logic.v
+set_global_assignment -name VERILOG_FILE game_timer.v
+set_global_assignment -name VERILOG_FILE game_state_controller.v
+set_global_assignment -name VERILOG_FILE menu_controller.v
+set_global_assignment -name VERILOG_FILE text_renderer.v
+set_global_assignment -name VERILOG_FILE seven_segment_controller.v
+set_global_assignment -name VERILOG_FILE menu_screen.v
+set_global_assignment -name VERILOG_FILE hexto7seg.v
+set_global_assignment -name VERILOG_FILE player2_input_handler.v
+set_global_assignment -name VERILOG_FILE player2_logic.v
+set_global_assignment -name VERILOG_FILE character_renderer_p2.v
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

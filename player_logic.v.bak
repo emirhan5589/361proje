@@ -1,0 +1,108 @@
+// player_logic.v
+// Manages the state (position, etc.) of a player character.
+// For Milestone Objective 3: Handles left/right movement with boundary checks.
+
+module player_logic (
+    // Clock and Reset
+    input wire clk_game,              // Game logic clock (e.g., 60Hz)
+    input wire reset,                 // Active-HIGH synchronous reset
+
+    // Input Commands (from input_handler.v)
+    input wire move_left_cmd_in,
+    input wire move_right_cmd_in,
+
+    // Character Property Outputs (to character_renderer.v)
+    output wire [9:0] char_x_pos_out,
+    output wire [9:0] char_y_pos_out,
+    output wire [9:0] char_width_out,
+    output wire [9:0] char_height_out,
+    output wire [7:0] char_color_out_332 // RRRGGGBB
+);
+
+    // --- Parameters for Character and Screen ---
+    // Dimensions (can be adjusted)
+    localparam P_CHAR_WIDTH  = 10'd32;
+    localparam P_CHAR_HEIGHT = 10'd60;
+
+    // Initial Position (can be adjusted)
+    localparam P_SCREEN_WIDTH  = 10'd640;
+    localparam P_SCREEN_HEIGHT = 10'd480;
+    localparam P_FLOOR_OFFSET  = 10'd40;
+
+    localparam P_INITIAL_CHAR_X_POS = (P_SCREEN_WIDTH / 2) - (P_CHAR_WIDTH / 2); // Approx. 304
+    localparam P_INITIAL_CHAR_Y_POS = P_SCREEN_HEIGHT - P_CHAR_HEIGHT - P_FLOOR_OFFSET; // Approx. 380
+
+    // Color (RRRGGGBB format - same as player_state_static for consistency)
+    localparam P_CHAR_COLOR_332 = 8'b11111110; // Light yellow/cream
+
+    // Movement and Screen Boundaries
+    localparam P_MOVE_SPEED   = 10'd3; // Pixels per game clock cycle
+    localparam P_SCREEN_MIN_X = 10'd0;
+    localparam P_SCREEN_MAX_X = P_SCREEN_WIDTH - 1; // Max X coordinate is 639 for 640 width
+
+    // --- Internal Registers for Character State ---
+    reg [9:0] current_char_x_pos_reg;
+    reg [9:0] current_char_y_pos_reg; // Y position is static for this milestone objective
+
+    // --- Initial block for simulation (good practice) ---
+    initial begin
+        current_char_x_pos_reg = P_INITIAL_CHAR_X_POS;
+        current_char_y_pos_reg = P_INITIAL_CHAR_Y_POS;
+    end
+
+    // --- Combinational assignment for static outputs ---
+    assign char_y_pos_out     = current_char_y_pos_reg; // Y is static
+    assign char_width_out     = P_CHAR_WIDTH;
+    assign char_height_out    = P_CHAR_HEIGHT;
+    assign char_color_out_332 = P_CHAR_COLOR_332;
+
+    // --- Sequential Logic for Position Update and Output ---
+    always @(posedge clk_game or posedge reset) begin
+        if (reset) begin
+            current_char_x_pos_reg <= P_INITIAL_CHAR_X_POS;
+            current_char_y_pos_reg <= P_INITIAL_CHAR_Y_POS; // Reset Y as well
+        end else begin
+            // Default next X position is current X position
+            reg [9:0] next_x_pos; // Use a temporary reg for next_x_pos calculation
+            next_x_pos = current_char_x_pos_reg;
+
+            // Milestone assumption: "player can only assert one of the inputs at any given time"
+            if (move_left_cmd_in) begin
+                // Check for potential underflow before subtracting if x_pos is signed (it's not here)
+                // or simply rely on boundary check.
+                if (current_char_x_pos_reg > (P_SCREEN_MIN_X + P_MOVE_SPEED -1) ) begin // ensure we don't wrap around with unsigned
+                     next_x_pos = current_char_x_pos_reg - P_MOVE_SPEED;
+                end else begin
+                     next_x_pos = P_SCREEN_MIN_X;
+                end
+
+            end else if (move_right_cmd_in) begin
+                // Check for potential overflow before adding
+                if (current_char_x_pos_reg < (P_SCREEN_MAX_X - P_CHAR_WIDTH - P_MOVE_SPEED + 2) ) begin // ensure we don't wrap
+                    next_x_pos = current_char_x_pos_reg + P_MOVE_SPEED;
+                end else begin
+                    next_x_pos = P_SCREEN_MAX_X - P_CHAR_WIDTH + 1;
+                end
+            end
+
+            // Boundary Checks for the calculated next_x_pos
+            // Left boundary
+            if (next_x_pos < P_SCREEN_MIN_X || next_x_pos > P_SCREEN_MAX_X) begin // Second part of condition handles large unsigned wrap
+                current_char_x_pos_reg <= P_SCREEN_MIN_X;
+            // Right boundary: char_x + char_width - 1 must be <= SCREEN_MAX_X
+            // So, char_x must be <= SCREEN_MAX_X - char_width + 1
+            end else if ((next_x_pos + P_CHAR_WIDTH -1 ) > P_SCREEN_MAX_X) begin
+                 current_char_x_pos_reg <= P_SCREEN_MAX_X - P_CHAR_WIDTH + 1;
+            end else begin
+                current_char_x_pos_reg <= next_x_pos;
+            end
+
+            // Y position remains static for this objective
+            // current_char_y_pos_reg <= current_char_y_pos_reg; // No change
+        end
+    end
+
+    // Assign registered X position to output
+    assign char_x_pos_out = current_char_x_pos_reg;
+
+endmodule
